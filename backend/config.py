@@ -62,7 +62,7 @@ class CORSConfig:
     allow_credentials: bool = field(
         default_factory=lambda: os.getenv("ALLOW_CREDENTIALS", "true").lower() == "true"
     )
-    allow_methods: list = field(default_factory=lambda: ["*"])
+    allow_methods: list = field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     allow_headers: list = field(default_factory=lambda: ["*"])
 
 

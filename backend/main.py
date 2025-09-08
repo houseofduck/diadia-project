@@ -60,13 +60,13 @@ LOGGING_CONFIG["formatters"]["default"][
     "fmt"
 ] = "%(asctime)s [%(name)s] %(levelprefix)s %(message)s"
 
-# Configure CORS
+# Configure CORS - Allow all for debugging
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[config.cors.frontend_url],  # Frontend URL from config
-    allow_credentials=config.cors.allow_credentials,
-    allow_methods=config.cors.allow_methods,
-    allow_headers=config.cors.allow_headers,
+    allow_origins=["*"],  # Allow all origins for debugging
+    allow_credentials=False,  # Must be False when allow_origins=["*"]
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
