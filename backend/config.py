@@ -41,12 +41,23 @@ class ServerConfig:
     )
 
 
+def _get_frontend_url() -> str:
+    """Get frontend URL with protocol if missing."""
+    url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    
+    # Add protocol if missing
+    if url and not url.startswith(('http://', 'https://')):
+        return f"https://{url}"
+    
+    return url
+
+
 @dataclass
 class CORSConfig:
     """CORS configuration settings."""
 
     frontend_url: str = field(
-        default_factory=lambda: os.getenv("FRONTEND_URL", "http://localhost:3000")
+        default_factory=lambda: _get_frontend_url()
     )
     allow_credentials: bool = field(
         default_factory=lambda: os.getenv("ALLOW_CREDENTIALS", "true").lower() == "true"
