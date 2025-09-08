@@ -2,6 +2,8 @@ backend/__pycache__/
 backend/frame/__pycache__/
 backend/openai_api.txt
 backend/tavily_api.txt
+backend/instances/
+backend/logs/
 backend/uvicorn_main.txt
 backend/.env
 frontend/.env

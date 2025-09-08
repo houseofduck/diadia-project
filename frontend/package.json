@@ -7,7 +7,23 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "biome check",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest src/services/__tests__/unit/",
+    "test:unit:watch": "vitest src/services/__tests__/unit/ --watch",
+    "test:unit:session": "vitest src/services/__tests__/unit/session.test.ts",
+    "test:unit:parser": "vitest src/services/__tests__/unit/sse-parser.test.ts",
+    "test:integration": "vitest src/services/__tests__/integration/",
+    "test:integration:watch": "vitest src/services/__tests__/integration/ --watch",
+    "test:integration:api": "vitest src/services/__tests__/integration/research-api.test.ts",
+    "test:integration:api2": "vitest src/services/__tests__/integration/research2-api.test.ts",
+    "test:integration:e2e": "vitest src/services/__tests__/integration/end-to-end.test.ts",
+    "test:services": "vitest src/services/",
+    "test:services:watch": "vitest src/services/ --watch",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "next": "15.5.2",
@@ -17,12 +33,22 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.2",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.2",
+    "@vitest/ui": "3.2.4",
     "husky": "^9.1.7",
+    "jsdom": "^26.1.0",
+    "msw": "2.4.3",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "ultracite": "^5.3.3"
+    "ultracite": "^5.3.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4",
+    "whatwg-fetch": "^3.6.20"
   }
 }
