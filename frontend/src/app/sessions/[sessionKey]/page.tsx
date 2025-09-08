@@ -3,10 +3,11 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../../../components/ui/button";
+import { ScrollArea } from "../../../components/ui/scroll-area";
 
-import { EventFeed } from "../../../components/EventFeed";
-import { ReportView } from "../../../components/ReportView";
-import { SessionBanner } from "../../../components/SessionBanner";
+import { EventFeed } from "../../../components/event-feed";
+import { ReportView } from "../../../components/report-view";
+import { SessionBanner } from "../../../components/session-banner";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../../components/ui/dialog";
-import { useResearchStream } from "../../../hooks/useResearchStream";
-import { useSession } from "../../../context/SessionContext";
+import { useResearchStream } from "../../../hooks/use-research-stream";
+import { useSession } from "../../../context/session-context";
 import { getSession, isValidSessionKey, saveSession } from "../../../services";
 import { X, AlertCircle, Wifi, WifiOff, ArrowLeft } from "lucide-react";
 
@@ -241,13 +242,26 @@ export default function SessionPage() {
       {/* Offline Banner */}
       <OfflineBanner isOnline={isOnline} />
 
-      {/* Error Banner */}
-      {showingError && <ErrorBanner error={error} onRetry={handleRetry} onReset={handleReset} />}
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-0">
         {/* Content Display */}
-        {showingProgress ? (
+        {showingError ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto p-8">
+              <div className="text-6xl mb-6">❌</div>
+              <h1 className="text-2xl font-bold mb-4">Research Failed</h1>
+              <p className="text-muted-foreground mb-6">{error}</p>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={handleRetry} className="px-6">
+                  Retry
+                </Button>
+                <Button variant="outline" onClick={handleReset} className="px-6">
+                  Start Over
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : showingProgress ? (
           <div className="flex-1 min-h-0 flex flex-col">
             <EventFeed
               events={events}
@@ -305,7 +319,7 @@ export default function SessionPage() {
             <DialogTitle className="flex items-center gap-2">📊 Research Report</DialogTitle>
             <DialogDescription>Your comprehensive research results</DialogDescription>
           </DialogHeader>
-          <div className="flex-1 min-h-0 px-6 pb-6">
+          <ScrollArea className="flex-1 px-6 pb-6">
             {report && (
               <ReportView
                 report={report}
@@ -314,7 +328,7 @@ export default function SessionPage() {
                 className="h-full"
               />
             )}
-          </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </div>

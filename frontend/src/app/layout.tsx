@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
-import { SessionProvider } from "../context/SessionContext";
+import { SessionProvider } from "../context/session-context";
 import localFont from "next/font/local";
+import Logo from "components/components/ui/logo";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -22,12 +23,14 @@ const matter = localFont({
       style: "normal",
     },
   ],
+  variable: "--font-matter",
 });
 
 const teodor = localFont({
   src: "./teodor-light.ttf",
   weight: "300",
   style: "normal",
+  variable: "--font-teodor",
 });
 
 export default function RootLayout({
@@ -37,19 +40,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${matter.className} ${teodor.className} antialiased`}>
+      <body className={`${matter.className} ${matter.variable} ${teodor.variable} antialiased`}>
         <SessionProvider>
           <header className="p-4 fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-b">
-            <nav className="flex gap-4">
-              <Link href="/" className="hover:underline">
-                Home
-              </Link>
-              <Link href="/about" className="hover:underline">
-                About
-              </Link>
-              <Link href="/settings" className="hover:underline">
-                Settings
-              </Link>
+            <nav className="flex gap-4 py-2">
+              <Logo color="black" className="h-6" />
             </nav>
           </header>
           <main className="pt-16 h-screen">{children}</main>

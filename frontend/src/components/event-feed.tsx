@@ -16,7 +16,8 @@ import {
   Target, 
   Globe, 
   Settings, 
-  Clock 
+  Clock,
+  ChevronDownIcon 
 } from 'lucide-react';
 import { 
   Message,
@@ -27,6 +28,12 @@ import {
   ConversationContent,
   ConversationScrollButton
 } from '../components/ai-elements/conversation';
+import {
+  Task,
+  TaskTrigger,
+  TaskContent,
+  TaskItem,
+} from '../components/ai-elements/task';
 import { cn } from '../lib/utils';
 import type { SSEEvent } from '../services';
 
@@ -246,54 +253,75 @@ export function EventFeed({ events, className, isStreaming = false, userQuery }:
           </Message>
         )}
         
-        {sortedEvents.map((event, index) => (
-          <Message
-            key={`${event.id}-${index}`}
-            from="assistant"
-            className="w-full"
-          >
-            <MessageContent>
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  {(() => {
-                    const IconComponent = getEventIcon(event.type);
-                    return <IconComponent className="w-4 h-4 text-muted-foreground" />;
-                  })()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant="outline" 
-                        className={cn('text-xs font-medium border', getEventColor(event.type))}
-                      >
-                        {getFriendlyEventName(event.type)}
-                      </Badge>
+        {sortedEvents.map((event, index) => {
+          const IconComponent = getEventIcon(event.type);
+          const hasDetails = event.description || (event.data && typeof event.data === 'object');
+          
+          return (
+            <Message
+              key={`${event.id}-${index}`}
+              from="assistant"
+              className="w-full"
+            >
+              <MessageContent>
+                <Task defaultOpen={false} className="w-full">
+                  <TaskTrigger
+                    title={getFriendlyEventName(event.type)}
+                    className="w-full"
+                  >
+                    <div className="flex items-center justify-between w-full cursor-pointer hover:bg-muted/50 rounded-md p-2 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <IconComponent className="w-4 h-4 text-muted-foreground" />
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className={cn('text-xs font-medium border', getEventColor(event.type))}
+                          >
+                            {getFriendlyEventName(event.type)}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <LiveTimestamp
+                          startTime={startTime}
+                          eventTime={event.timestamp}
+                          isLatest={index === sortedEvents.length - 1}
+                          isStreaming={isStreaming}
+                        />
+                        {hasDetails && (
+                          <div className="ml-2 group-data-[state=open]:rotate-180 transition-transform">
+                            <ChevronDownIcon className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <LiveTimestamp
-                      startTime={startTime}
-                      eventTime={event.timestamp}
-                      isLatest={index === sortedEvents.length - 1}
-                      isStreaming={isStreaming}
-                    />
-                  </div>
-                  {event.description && (
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {event.description}
-                    </p>
+                  </TaskTrigger>
+                  
+                  {hasDetails && (
+                    <TaskContent>
+                      {event.description && (
+                        <TaskItem>
+                          <p className="text-sm leading-relaxed">
+                            {event.description}
+                          </p>
+                        </TaskItem>
+                      )}
+                      {event.data && typeof event.data === 'object' && (
+                        <TaskItem>
+                          <div className="p-3 bg-muted/50 rounded border text-xs">
+                            <pre className="whitespace-pre-wrap break-all">
+                              {JSON.stringify(event.data, null, 2)}
+                            </pre>
+                          </div>
+                        </TaskItem>
+                      )}
+                    </TaskContent>
                   )}
-                  {event.data && typeof event.data === 'object' ? (
-                    <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
-                      <pre className="whitespace-pre-wrap break-all">
-                        {JSON.stringify(event.data, null, 2)}
-                      </pre>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </MessageContent>
-          </Message>
-        ))}
+                </Task>
+              </MessageContent>
+            </Message>
+          );
+        })}
       </ConversationContent>
       <ConversationScrollButton />
     </Conversation>
