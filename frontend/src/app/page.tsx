@@ -17,6 +17,14 @@ import {
 import { EventFeed } from '../components/EventFeed';
 import { ReportView } from '../components/ReportView';
 import { SessionBanner } from '../components/SessionBanner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/dialog';
 import { useResearchStream } from '../hooks/useResearchStream';
 import { cn } from '../lib/utils';
 import { X, AlertCircle, Wifi, WifiOff } from 'lucide-react';
@@ -81,6 +89,7 @@ function OfflineBanner({ isOnline }: { isOnline: boolean }) {
 export default function HomePage() {
   const [prompt, setPrompt] = useState('');
   const [userMessage, setUserMessage] = useState<string | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
   
   const {
     sessionKey,
@@ -109,11 +118,15 @@ export default function HomePage() {
 
   const handleCancel = useCallback(() => {
     cancel();
-  }, [cancel]);
+    // Start a new session after cancelling
+    reset();
+    setUserMessage(null);
+  }, [cancel, reset]);
 
   const handleNewQuery = useCallback(() => {
     reset();
     setUserMessage(null);
+    setShowReportModal(false);
   }, [reset]);
 
   const handleRetry = useCallback(() => {
@@ -126,8 +139,8 @@ export default function HomePage() {
   }, [reset]);
 
   const isInputDisabled = status === 'submitting' || status === 'streaming' || !isOnline;
-  const showingReport = status === 'completed' && report;
-  const showingProgress = (status === 'streaming' || status === 'submitting') && events.length > 0;
+  const hasReport = status === 'completed' && report;
+  const showingProgress = (status === 'streaming' || status === 'submitting' || hasReport) && events.length > 0;
   const showingError = status === 'error' && error;
 
   return (
@@ -162,16 +175,24 @@ export default function HomePage() {
         )}
 
         {/* Content Display */}
-        {showingReport ? (
-          <ReportView 
-            report={report} 
-            sessionKey={sessionKey || undefined}
-            onNewQuery={handleNewQuery}
-            className="flex-1 min-h-0"
-          />
-        ) : showingProgress ? (
-          <div className="flex-1 min-h-0">
-            <EventFeed events={events} className="h-full" />
+        {showingProgress ? (
+          <div className="flex-1 min-h-0 relative">
+            <EventFeed 
+              events={events} 
+              className="h-full" 
+              isStreaming={status === 'streaming'} 
+            />
+            {/* View Report Button - shown when report is ready */}
+            {hasReport && (
+              <div className="absolute top-4 right-4 z-10">
+                <Button 
+                  onClick={() => setShowReportModal(true)}
+                  className="bg-green-600 hover:bg-green-700 text-white shadow-lg"
+                >
+                  📊 View Report
+                </Button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
@@ -200,38 +221,64 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="p-4 border-t bg-background">
-          <PromptInput onSubmit={handleSubmit} className="max-w-4xl mx-auto">
-            <PromptInputTextarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="What would you like me to research? (e.g., 'Latest developments in quantum computing')"
-              disabled={isInputDisabled}
-              className="min-h-[60px]"
-            />
-            <PromptInputToolbar>
-              <PromptInputTools>
-                {(status === 'streaming' || status === 'submitting') && (
-                  <PromptInputButton
-                    variant="ghost"
-                    onClick={handleCancel}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="w-4 h-4" />
-                    Cancel
-                  </PromptInputButton>
-                )}
-              </PromptInputTools>
-              
-              <PromptInputSubmit
-                disabled={isInputDisabled || !prompt.trim()}
-                status={status === 'submitting' ? 'submitted' : status === 'streaming' ? 'streaming' : undefined}
+        {/* Input Area or Cancel Button */}
+        {(status === 'streaming' || status === 'submitting') ? (
+          <div className="p-4 border-t bg-background">
+            <div className="max-w-4xl mx-auto flex justify-center">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel Research
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 border-t bg-background">
+            <PromptInput onSubmit={handleSubmit} className="max-w-4xl mx-auto">
+              <PromptInputTextarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="What would you like me to research? (e.g., 'Latest developments in quantum computing')"
+                disabled={isInputDisabled}
+                className="min-h-[60px]"
               />
-            </PromptInputToolbar>
-          </PromptInput>
-        </div>
+              <PromptInputToolbar>
+                <PromptInputTools />
+                <PromptInputSubmit
+                  disabled={isInputDisabled || !prompt.trim()}
+                />
+              </PromptInputToolbar>
+            </PromptInput>
+          </div>
+        )}
       </div>
+
+      {/* Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="w-full h-full max-w-none md:max-w-3xl md:h-[95vh] md:w-auto md:right-4 md:left-auto md:translate-x-0 p-0 gap-0 md:top-4 md:translate-y-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center gap-2">
+              📊 Research Report
+            </DialogTitle>
+            <DialogDescription>
+              Your comprehensive research results
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 px-6 pb-6">
+            {report && (
+              <ReportView 
+                report={report} 
+                sessionKey={sessionKey || undefined}
+                onNewQuery={handleNewQuery}
+                className="h-full"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,10 +1,18 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { ScrollArea } from '../components/ui/scroll-area';
 import { Response } from '../components/ai-elements/response';
+import { 
+  InlineCitation,
+  InlineCitationText,
+  InlineCitationCard,
+  InlineCitationCardTrigger,
+  InlineCitationCardBody,
+  InlineCitationSource,
+} from '../components/ai-elements/inline-citation';
 import { cn } from '../lib/utils';
 import { 
   Copy, 
@@ -19,6 +27,81 @@ export interface ReportViewProps {
   sessionKey?: string;
   className?: string;
   onNewQuery?: () => void;
+}
+
+// Custom renderer for markdown with inline citations
+function MarkdownWithCitations({ content }: { content: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  const linkData = useMemo(() => {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const links: { text: string; url: string }[] = [];
+    let match;
+    
+    while ((match = linkRegex.exec(content)) !== null) {
+      links.push({ text: match[1], url: match[2] });
+    }
+    
+    // Group links by domain for citation clustering
+    const sourcesByDomain: { [domain: string]: string[] } = {};
+    links.forEach(link => {
+      try {
+        const domain = new URL(link.url).hostname;
+        if (!sourcesByDomain[domain]) {
+          sourcesByDomain[domain] = [];
+        }
+        if (!sourcesByDomain[domain].includes(link.url)) {
+          sourcesByDomain[domain].push(link.url);
+        }
+      } catch {
+        if (!sourcesByDomain['unknown']) {
+          sourcesByDomain['unknown'] = [];
+        }
+        if (!sourcesByDomain['unknown'].includes(link.url)) {
+          sourcesByDomain['unknown'].push(link.url);
+        }
+      }
+    });
+    
+    return sourcesByDomain;
+  }, [content]);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    // Find all rendered links and enhance them with citation styling
+    const links = containerRef.current.querySelectorAll('a[href]');
+    
+    links.forEach((link) => {
+      const href = link.getAttribute('href');
+      const text = link.textContent;
+      
+      if (!href || !text) return;
+      
+      try {
+        const domain = new URL(href).hostname;
+        const sources = linkData[domain] || [href];
+        
+        // Add citation styling
+        link.className = 'text-blue-600 hover:text-blue-800 border-b border-blue-200 hover:border-blue-400 no-underline hover:no-underline transition-colors';
+        link.setAttribute('data-domain', domain);
+        link.setAttribute('data-sources', sources.join(','));
+        link.setAttribute('title', `Source: ${domain} (${sources.length} link${sources.length > 1 ? 's' : ''})`);
+        
+      } catch {
+        // Keep as regular link for invalid URLs
+      }
+    });
+  }, [content, linkData]);
+  
+  return (
+    <div 
+      ref={containerRef}
+      className="prose prose-sm dark:prose-invert max-w-none"
+    >
+      <Response>{content}</Response>
+    </div>
+  );
 }
 
 export function ReportView({ 
@@ -134,9 +217,7 @@ export function ReportView({
 
       {/* Report content */}
       <ScrollArea className="flex-1 p-6">
-        <div className="max-w-none prose prose-sm dark:prose-invert">
-          <Response>{report}</Response>
-        </div>
+        <MarkdownWithCitations content={report} />
       </ScrollArea>
 
       {/* Footer actions */}

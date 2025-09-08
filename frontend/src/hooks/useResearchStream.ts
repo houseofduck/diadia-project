@@ -212,13 +212,18 @@ export function useResearchStream(): UseResearchStreamReturn {
                 payload: errorMessage
               });
               break;
-              
-            case 'completed':
+
+            case 'report_done':
+              // Extract report from report_done event
               if (event.report) {
                 dispatch({ type: 'SET_REPORT', payload: event.report });
               } else if (sseEvent.data && typeof sseEvent.data === 'object' && 'report' in sseEvent.data) {
                 dispatch({ type: 'SET_REPORT', payload: (sseEvent.data as { report: string }).report });
               }
+              break;
+              
+            case 'completed':
+              // Just mark as completed - report should already be set from report_done
               dispatch({ type: 'SET_COMPLETED' });
               break;
               

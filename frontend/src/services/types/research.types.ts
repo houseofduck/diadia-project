@@ -51,11 +51,25 @@ export type SSEEvent = {
 
 export type EventType = 
   | 'started'
-  | 'generic'
-  | 'progress'
+  | 'prompt_received'
+  | 'prompt_analysis_started'
+  | 'prompt_analysis_completed'
+  | 'task_analysis_completed'
+  | 'topic_exploration_started'
+  | 'topic_exploration_completed'
+  | 'search_started'
+  | 'search_result_processing_started'
+  | 'search_result_processing_completed'
+  | 'aggregation_started'
+  | 'research_completed'
   | 'research_complete'
   | 'reporting_started'
+  | 'report_building'
+  | 'report_processing'
+  | 'report_done'
   | 'completed'
+  | 'generic'
+  | 'progress'
   | 'error'
   | 'cancelled';
 
