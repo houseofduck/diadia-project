@@ -27,10 +27,10 @@ export function ReportPanel({
           delay: 0.2, // Small delay for smooth entrance
         },
       }
-    : {
+    : ({
         animate: { opacity: 1, x: 0 },
         initial: { opacity: 1, x: 0 },
-      };
+      } as any); // Would refactor this to be more type safe in the future
 
   return (
     <motion.div

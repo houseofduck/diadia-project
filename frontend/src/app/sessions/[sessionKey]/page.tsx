@@ -289,9 +289,8 @@ export default function SessionPage() {
           <div className="p-4 border-t bg-white">
             <div className="max-w-4xl mx-auto flex justify-center">
               <Button
-                variant="outline"
                 onClick={handleCancel}
-                className="px-6 h-10 rounded-full text-base border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                className="bg-[#20201a] hover:bg-[#20201a]/90 h-10 text-white shadow-lg px-6 text-base rounded-full"
                 size="lg"
               >
                 <X className="w-4 h-4 mr-2" />
