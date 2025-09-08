@@ -272,14 +272,22 @@ export default function SessionPage() {
 
             {/* View Report Button - shown at bottom when report is ready */}
             {hasReport && (
-              <div className="p-4 border-t bg-background/50">
-                <div className="max-w-4xl mx-auto flex justify-center">
+              <div className="px-4 md:p-4 py-4 border-t bg-background/50">
+                <div className="flex flex-col md:flex-row md:justify-center gap-3  md:mx-auto ">
                   <Button
                     onClick={() => setShowReportModal(true)}
-                    className="bg-green-600 hover:bg-green-700 text-white shadow-lg px-6 py-3"
+                    className="bg-[#20201a] hover:bg-[#20201a]/90 h-10 text-white shadow-lg px-6 md:py-3.5 md:h-12 text-base md:text-lg rounded-full w-full md:w-1/2"
                     size="lg"
                   >
-                    📊 View Research Report
+                    View research report
+                  </Button>
+                  <Button
+                    onClick={handleNewQuery}
+                    variant="outline"
+                    className="px-6 md:py-3.5 h-10 md:h-12 rounded-full text-base md:text-lg w-full md:w-1/2 border-[#20201a]"
+                    size="lg"
+                  >
+                    Run new report
                   </Button>
                 </div>
               </div>
@@ -289,7 +297,7 @@ export default function SessionPage() {
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md mx-auto p-8">
               <div className="text-6xl mb-6">🔍</div>
-              <h1 className="text-2xl font-bold mb-4">Starting Research...</h1>
+              <h1 className="text-2xl font-bold mb-4">Starting research...</h1>
               <p className="text-muted-foreground mb-6">Initializing your research session.</p>
             </div>
           </div>
