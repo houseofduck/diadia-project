@@ -210,16 +210,29 @@ export function ReportView({
       pdfContainer.style.width = '800px';
       pdfContainer.style.padding = '40px';
       pdfContainer.style.backgroundColor = 'white';
-      pdfContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      pdfContainer.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
       
-      // Add logo and title
+      // Load and embed PNG logo as base64
+      let logoBase64 = '';
+      try {
+        const response = await fetch('/logo.png');
+        const blob = await response.blob();
+        logoBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch (error) {
+        console.warn('Could not load logo:', error);
+      }
+      
+      // Add logo header with embedded PNG in column layout
       pdfContainer.innerHTML = `
-        <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e5e5; padding-bottom: 20px;">
-          <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 8px;">📊 Research Report</div>
-          <div style="font-size: 14px; color: #666; font-family: monospace;">${sessionKey ? `Session: ${sessionKey.slice(0, 8)}...` : ''}</div>
-          <div style="font-size: 12px; color: #999;">${new Date().toLocaleString()}</div>
+        <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #e5e5e5; text-align: center;">
+          ${logoBase64 ? `<img src="${logoBase64}" alt="Logo" style="height: 32px; width: auto; margin-bottom: 16px;" />` : ''}
+          <div style="font-size: 22px; font-weight: 700; color: #1a1a1a; font-family: 'Helvetica Neue', Arial, sans-serif;">Research Report</div>
         </div>
-        <div style="line-height: 1.6; color: #333;"></div>
+        <div style="line-height: 1.7; color: #374151; font-family: 'Helvetica Neue', Arial, sans-serif; font-weight: 400;"></div>
       `;
       
       // Clone and clean the report content
@@ -229,39 +242,128 @@ export function ReportView({
       const interactiveElements = contentClone.querySelectorAll('button, [role="button"], .hover\\:, [class*="hover:"]');
       interactiveElements.forEach(el => el.remove());
       
-      // Ensure good PDF styling
+      // Ensure good PDF styling with Matter Regular equivalent
       contentClone.style.maxWidth = 'none';
-      contentClone.style.fontSize = '14px';
-      contentClone.style.lineHeight = '1.6';
-      contentClone.style.color = '#333';
+      contentClone.style.fontSize = '16px';
+      contentClone.style.lineHeight = '1.7';
+      contentClone.style.color = '#374151';
+      contentClone.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+      contentClone.style.fontWeight = '400';
       
-      // Style headings for PDF
+      // Style links
+      const links = contentClone.querySelectorAll('a');
+      links.forEach(link => {
+        const a = link as HTMLElement;
+        a.style.color = '#3b82f6';
+        a.style.textDecoration = 'none';
+      });
+      
+      // Style citation badges
+      const citations = contentClone.querySelectorAll('span[class*="citation"], span[title*="Source:"]');
+      citations.forEach(citation => {
+        const c = citation as HTMLElement;
+        c.style.fontSize = '12px';
+        c.style.padding = '2px 6px';
+        c.style.backgroundColor = '#f3f4f6';
+        c.style.border = '1px solid #d1d5db';
+        c.style.borderRadius = '4px';
+        c.style.marginLeft = '4px';
+        c.style.color = '#6b7280';
+      });
+      
+      // Remove bullet points from lists and ensure left alignment
+      const allLists = contentClone.querySelectorAll('ul, ol');
+      allLists.forEach(list => {
+        const l = list as HTMLElement;
+        l.style.listStyleType = 'none';
+        l.style.paddingLeft = '0';
+        l.style.textAlign = 'left';
+        l.style.marginLeft = '0';
+      });
+      
+      // Ensure all text elements are left-aligned
+      const allTextElements = contentClone.querySelectorAll('*');
+      allTextElements.forEach(element => {
+        const el = element as HTMLElement;
+        if (el.style.textAlign === 'center' || el.style.textAlign === 'right') {
+          el.style.textAlign = 'left';
+        }
+      });
+      
+      // Style headings for PDF to match custom fonts
       const headings = contentClone.querySelectorAll('h1, h2, h3, h4, h5, h6');
       headings.forEach((heading, index) => {
         const h = heading as HTMLElement;
         h.style.color = '#1a1a1a';
-        h.style.marginTop = index === 0 ? '0' : '24px';
-        h.style.marginBottom = '12px';
-        h.style.fontWeight = 'bold';
-        if (h.tagName === 'H1') h.style.fontSize = '24px';
-        if (h.tagName === 'H2') h.style.fontSize = '20px';
-        if (h.tagName === 'H3') h.style.fontSize = '18px';
+        h.style.marginTop = index === 0 ? '0' : '32px';
+        h.style.marginBottom = '16px';
+        h.style.textAlign = 'left';
+        
+        if (h.tagName === 'H1') {
+          // Teodor Light style - use serif with light weight
+          h.style.fontFamily = 'Georgia, "Times New Roman", serif';
+          h.style.fontWeight = '300';
+          h.style.fontSize = '32px';
+          h.style.lineHeight = '1.2';
+          h.style.letterSpacing = '-0.02em';
+        } else if (h.tagName === 'H2') {
+          // Matter Bold style - use sans-serif with bold weight
+          h.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+          h.style.fontWeight = '700';
+          h.style.fontSize = '24px';
+          h.style.lineHeight = '1.3';
+          h.style.letterSpacing = '-0.01em';
+        } else if (h.tagName === 'H3') {
+          // Matter Bold style - smaller size
+          h.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+          h.style.fontWeight = '700';
+          h.style.fontSize = '20px';
+          h.style.lineHeight = '1.4';
+          h.style.letterSpacing = '-0.005em';
+        } else {
+          // Other headings use Matter Bold
+          h.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+          h.style.fontWeight = '700';
+          h.style.fontSize = '18px';
+          h.style.lineHeight = '1.5';
+        }
       });
       
-      // Style paragraphs
+      // Style paragraphs with Matter Regular equivalent
       const paragraphs = contentClone.querySelectorAll('p');
       paragraphs.forEach(p => {
         const para = p as HTMLElement;
-        para.style.marginBottom = '12px';
-        para.style.textAlign = 'justify';
+        para.style.marginBottom = '16px';
+        para.style.textAlign = 'left';
+        para.style.lineHeight = '1.7';
+        para.style.fontSize = '16px';
+        para.style.color = '#374151';
+        para.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+        para.style.fontWeight = '400';
+        para.style.letterSpacing = '0';
       });
       
-      // Style lists
+      // Style lists with Matter Regular equivalent
       const lists = contentClone.querySelectorAll('ul, ol');
       lists.forEach(list => {
         const l = list as HTMLElement;
-        l.style.marginBottom = '12px';
-        l.style.paddingLeft = '20px';
+        l.style.marginBottom = '16px';
+        l.style.paddingLeft = '24px';
+        l.style.fontSize = '16px';
+        l.style.lineHeight = '1.7';
+        l.style.color = '#374151';
+        l.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+        l.style.fontWeight = '400';
+      });
+      
+      // Style list items with Matter Regular
+      const listItems = contentClone.querySelectorAll('li');
+      listItems.forEach(item => {
+        const li = item as HTMLElement;
+        li.style.marginBottom = '8px';
+        li.style.lineHeight = '1.7';
+        li.style.fontFamily = '"Helvetica Neue", Arial, sans-serif';
+        li.style.fontWeight = '400';
       });
       
       // Add the cleaned content to PDF container
