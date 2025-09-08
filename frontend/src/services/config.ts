@@ -1,5 +1,16 @@
+const getBaseUrl = () => {
+  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  
+  // Add protocol if missing
+  if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+    return `https://${url}`;
+  }
+  
+  return url;
+};
+
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  BASE_URL: getBaseUrl(),
   ENDPOINTS: {
     RESEARCH: '/api/research',
     RESEARCH_V2: '/api/research2',
