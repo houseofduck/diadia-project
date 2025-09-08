@@ -2,8 +2,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from 'components/components/ui/avatar';
-import { cn } from 'components/lib/utils';
+} from '../ui/avatar';
+import { cn } from '../../lib/utils';
 import type { UIMessage } from 'ai';
 import type { ComponentProps, HTMLAttributes } from 'react';
 

@@ -1,15 +1,15 @@
 'use client';
 
-import { Button } from 'components/components/ui/button';
+import { Button } from '../ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from 'components/components/ui/select';
-import { Textarea } from 'components/components/ui/textarea';
-import { cn } from 'components/lib/utils';
+} from '../ui/select';
+import { Textarea } from '../ui/textarea';
+import { cn } from '../../lib/utils';
 import type { ChatStatus } from 'ai';
 import { Loader2Icon, SendIcon, SquareIcon, XIcon } from 'lucide-react';
 import type {
