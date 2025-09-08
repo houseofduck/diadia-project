@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SessionProvider } from "../context/session-context";
 import localFont from "next/font/local";
 import Logo from "components/components/ui/logo";
+import { GlowOverlay } from "../components/glow-overlay";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -42,11 +43,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${matter.className} ${matter.variable} ${teodor.variable} antialiased`}>
         <SessionProvider>
-          <div
-            aria-hidden
-            className="pointer-events-none fixed inset-x-0 top-[-40vw] w-screen aspect-[2/1] rounded-full bg-[#fff596] blur-[100px] z-0"
-          />
-          <header className="p-4 fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-sm border-b">
+          <GlowOverlay />
+          <header className="p-4 fixed top-0 left-0 right-0 z-20 bg-transparent border-b border-gray-200/50 backdrop-blur-sm">
             <nav className="flex gap-4 py-2">
               <Logo color="black" className="h-6" />
             </nav>

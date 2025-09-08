@@ -6,15 +6,8 @@ import { Button } from "../../../components/ui/button";
 import { ScrollArea } from "../../../components/ui/scroll-area";
 
 import { EventFeed } from "../../../components/event-feed";
-import { ReportView } from "../../../components/report-view";
+import { ReportPanel } from "../../../components/report-panel";
 import { SessionBanner } from "../../../components/session-banner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "../../../components/ui/dialog";
 import { useResearchStream } from "../../../hooks/use-research-stream";
 import { useSession } from "../../../context/session-context";
 import { getSession, isValidSessionKey, saveSession } from "../../../services";
@@ -84,11 +77,12 @@ export default function SessionPage() {
   const sessionKey = params?.sessionKey as string;
   const query = searchParams?.get("q");
 
-  const [showReportModal, setShowReportModal] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const [userMessage, setUserMessage] = useState<string | null>(query);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionNotFound, setSessionNotFound] = useState(false);
   const hasInitialized = useRef(false);
+  const hasReportBeenViewedRef = useRef(false);
 
   const { setSessionKey } = useSession();
   const {
@@ -190,6 +184,14 @@ export default function SessionPage() {
     (status === "streaming" || status === "submitting" || hasReport) && events.length > 0;
   const showingError = status === "error" && error;
 
+  // Auto-show report when it becomes available for the first time
+  useEffect(() => {
+    if (hasReport && !hasReportBeenViewedRef.current) {
+      setShowReport(true);
+      hasReportBeenViewedRef.current = true;
+    }
+  }, [hasReport]);
+
   // Show loading state
   if (isLoading) {
     return (
@@ -224,7 +226,7 @@ export default function SessionPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Header with back button */}
-      <div className="flex items-center gap-4 p-4 border-b bg-background/50">
+      <div className="flex items-center gap-4 p-4 border-b bg-white relative z-10">
         <Button
           variant="ghost"
           size="sm"
@@ -242,10 +244,11 @@ export default function SessionPage() {
       {/* Offline Banner */}
       <OfflineBanner isOnline={isOnline} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Content Display */}
-        {showingError ? (
+      {/* Main Content Area with two columns when report is shown */}
+      <div className="flex-1 flex flex-col md:flex-row min-h-0">
+        {/* Left Column - Event Feed */}
+        <div className={`flex-1 flex flex-col min-h-0 bg-white relative z-10 ${showReport && hasReport ? 'md:w-1/2 w-full' : 'w-full'}`}>
+          {showingError ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md mx-auto p-8">
               <div className="text-6xl mb-6">❌</div>
@@ -270,28 +273,6 @@ export default function SessionPage() {
               userQuery={userMessage}
             />
 
-            {/* View Report Button - shown at bottom when report is ready */}
-            {hasReport && (
-              <div className="px-4 md:p-4 py-4 border-t bg-background/50">
-                <div className="flex flex-col md:flex-row md:justify-center gap-3  md:mx-auto ">
-                  <Button
-                    onClick={() => setShowReportModal(true)}
-                    className="bg-[#20201a] hover:bg-[#20201a]/90 h-10 text-white shadow-lg px-6 md:py-3.5 md:h-12 text-base md:text-lg rounded-full w-full md:w-1/2"
-                    size="lg"
-                  >
-                    View research report
-                  </Button>
-                  <Button
-                    onClick={handleNewQuery}
-                    variant="outline"
-                    className="px-6 md:py-3.5 h-10 md:h-12 rounded-full text-base md:text-lg w-full md:w-1/2 border-[#20201a]"
-                    size="lg"
-                  >
-                    Run new report
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
@@ -305,12 +286,13 @@ export default function SessionPage() {
 
         {/* Cancel Button for active research */}
         {(status === "streaming" || status === "submitting") && (
-          <div className="p-4 border-t bg-background">
+          <div className="p-4 border-t bg-white">
             <div className="max-w-4xl mx-auto flex justify-center">
               <Button
                 variant="outline"
                 onClick={handleCancel}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                className="px-6 h-10 rounded-full text-base border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50"
+                size="lg"
               >
                 <X className="w-4 h-4 mr-2" />
                 Cancel Research
@@ -318,27 +300,41 @@ export default function SessionPage() {
             </div>
           </div>
         )}
+        </div>
+
+        {/* Right Column - Report Display */}
+        {showReport && hasReport && report && (
+          <ReportPanel
+            report={report}
+            sessionKey={sessionKey || undefined}
+            onNewQuery={handleNewQuery}
+            shouldAnimate={!hasReportBeenViewedRef.current}
+          />
+        )}
       </div>
 
-      {/* Report Modal */}
-      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
-        <DialogContent className="w-full h-full max-w-none md:max-w-3xl md:h-[95vh] md:w-auto md:right-4 md:left-auto md:translate-x-0 p-0 gap-0 md:top-4 md:translate-y-0">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="flex items-center gap-2">📊 Research Report</DialogTitle>
-            <DialogDescription>Your comprehensive research results</DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1 px-6 pb-6">
-            {report && (
-              <ReportView
-                report={report}
-                sessionKey={sessionKey || undefined}
-                onNewQuery={handleNewQuery}
-                className="h-full"
-              />
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
+      {/* Bottom Action Bar - spans full width when report is ready */}
+      {hasReport && (
+        <div className="px-4 md:p-4 py-4 border-t bg-white relative z-10">
+          <div className="flex flex-col md:flex-row md:justify-center gap-3 md:mx-auto">
+            <Button
+              onClick={() => setShowReport(!showReport)}
+              className="bg-[#20201a] hover:bg-[#20201a]/90 h-10 text-white shadow-lg px-6 md:py-3.5 md:h-12 text-base md:text-lg rounded-full w-full md:w-1/2"
+              size="lg"
+            >
+              {showReport ? 'Hide' : 'View'} research report
+            </Button>
+            <Button
+              onClick={handleNewQuery}
+              variant="outline"
+              className="px-6 md:py-3.5 h-10 md:h-12 rounded-full text-base md:text-lg w-full md:w-1/2 border-[#20201a]"
+              size="lg"
+            >
+              Run new report
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

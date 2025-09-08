@@ -152,9 +152,9 @@ export function ReportView({
   }, [sessionKey]);
 
   return (
-    <div className={cn('flex flex-col h-full', className)}>
+    <div className={cn('flex flex-col h-full overflow-hidden', className)}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-background/50">
+      <div className="flex items-center justify-between p-4 border-b bg-background/50 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="text-lg">📊</div>
           <div>
@@ -215,36 +215,14 @@ export function ReportView({
         </div>
       </div>
 
-      {/* Report content */}
-      <ScrollArea className="flex-1 p-6">
-        <MarkdownWithCitations content={report} />
+      {/* Report content - with overflow handling */}
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="p-6">
+          <MarkdownWithCitations content={report} />
+        </div>
       </ScrollArea>
 
-      {/* Footer actions */}
-      <div className="p-4 border-t bg-background/50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Report generated successfully</span>
-            {sessionKey && (
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => window.open(`/sessions/${sessionKey}`, '_blank')}
-                className="h-auto p-0 text-xs"
-              >
-                <ExternalLinkIcon className="w-3 h-3 mr-1" />
-                Open in new tab
-              </Button>
-            )}
-          </div>
-          
-          {onNewQuery && (
-            <Button onClick={onNewQuery}>
-              New Research Query
-            </Button>
-          )}
-        </div>
-      </div>
+      {/* Footer - removed since buttons are now in main page */}
     </div>
   );
 }
