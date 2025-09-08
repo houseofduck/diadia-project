@@ -2,10 +2,15 @@
 builder = "NIXPACKS"
 watchPatterns = ["frontend/**"]
 
-[build.env]
-NODE_VERSION = "18"
+[build.nixpacksPlan.phases.install]
+dependsOn = ["setup"]
+cmds = ["bun install"]
+
+[build.nixpacksPlan.phases.build]
+dependsOn = ["install"]
+cmds = ["bun run build"]
 
 [deploy]
-startCommand = "npm run start"
+startCommand = "bun run start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
