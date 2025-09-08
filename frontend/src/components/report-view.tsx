@@ -29,49 +29,125 @@ export interface ReportViewProps {
   onNewQuery?: () => void;
 }
 
+// Custom citation badge component
+function CitationBadge({ refNum, url, domain }: { refNum: string; url: string; domain: string }) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  return (
+    <span
+      onClick={handleClick}
+      className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded cursor-pointer hover:bg-gray-200 transition-colors ml-1 border border-gray-200"
+      title={`Source: ${domain}\nClick to open: ${url}`}
+    >
+      {domain}
+    </span>
+  );
+}
+
 // Custom renderer for markdown with inline citations
 function MarkdownWithCitations({ content }: { content: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   
-  const linkData = useMemo(() => {
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    const links: { text: string; url: string }[] = [];
+  const { processedContent, referenceMap } = useMemo(() => {
+    // Extract reference-style links at the bottom: [0]: https://...
+    const referenceRegex = /\[(\d+)\]:\s*(https?:\/\/[^\s]+)/g;
+    const references: { [key: string]: string } = {};
     let match;
     
-    while ((match = linkRegex.exec(content)) !== null) {
-      links.push({ text: match[1], url: match[2] });
+    while ((match = referenceRegex.exec(content)) !== null) {
+      references[match[1]] = match[2];
     }
     
-    // Group links by domain for citation clustering
-    const sourcesByDomain: { [domain: string]: string[] } = {};
-    links.forEach(link => {
-      try {
-        const domain = new URL(link.url).hostname;
-        if (!sourcesByDomain[domain]) {
-          sourcesByDomain[domain] = [];
-        }
-        if (!sourcesByDomain[domain].includes(link.url)) {
-          sourcesByDomain[domain].push(link.url);
-        }
-      } catch {
-        if (!sourcesByDomain['unknown']) {
-          sourcesByDomain['unknown'] = [];
-        }
-        if (!sourcesByDomain['unknown'].includes(link.url)) {
-          sourcesByDomain['unknown'].push(link.url);
-        }
-      }
-    });
-    
-    return sourcesByDomain;
+    return { processedContent: content, referenceMap: references };
   }, [content]);
-  
+
+  // Post-process the rendered content to add citations
   useEffect(() => {
     if (!containerRef.current) return;
-    
-    // Find all rendered links and enhance them with citation styling
+
+    // Find all [[number]] patterns in text nodes and replace them with citation badges
+    const walker = document.createTreeWalker(
+      containerRef.current,
+      NodeFilter.SHOW_TEXT,
+      null,
+      false
+    );
+
+    const textNodes: Text[] = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      textNodes.push(node as Text);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.textContent || '';
+      const citationRegex = /\[\[(\d+)\]\]/g;
+      let hasMatch = false;
+      let match;
+
+      // Check if this text node contains citations
+      while ((match = citationRegex.exec(text)) !== null) {
+        hasMatch = true;
+        break;
+      }
+
+      if (hasMatch) {
+        // Create a new element to replace the text node
+        const wrapper = document.createElement('span');
+        let lastIndex = 0;
+        
+        // Reset regex
+        citationRegex.lastIndex = 0;
+        
+        while ((match = citationRegex.exec(text)) !== null) {
+          const [fullMatch, num] = match;
+          const url = referenceMap[num];
+          
+          // Add text before citation
+          if (match.index > lastIndex) {
+            wrapper.appendChild(
+              document.createTextNode(text.slice(lastIndex, match.index))
+            );
+          }
+          
+          // Add citation badge
+          if (url) {
+            try {
+              const domain = new URL(url).hostname;
+              const badge = document.createElement('span');
+              badge.textContent = domain;
+              badge.className = 'px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded cursor-pointer hover:bg-gray-200 transition-colors ml-1 border border-gray-200';
+              badge.title = `Source: ${domain}\nClick to open: ${url}`;
+              badge.onclick = (e) => {
+                e.preventDefault();
+                window.open(url, '_blank', 'noopener,noreferrer');
+              };
+              wrapper.appendChild(badge);
+            } catch {
+              wrapper.appendChild(document.createTextNode(fullMatch));
+            }
+          } else {
+            wrapper.appendChild(document.createTextNode(fullMatch));
+          }
+          
+          lastIndex = match.index + fullMatch.length;
+        }
+        
+        // Add remaining text
+        if (lastIndex < text.length) {
+          wrapper.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+        
+        // Replace the text node with the wrapper
+        textNode.parentNode?.replaceChild(wrapper, textNode);
+      }
+    });
+
+    // Also handle regular markdown links
     const links = containerRef.current.querySelectorAll('a[href]');
-    
     links.forEach((link) => {
       const href = link.getAttribute('href');
       const text = link.textContent;
@@ -80,26 +156,47 @@ function MarkdownWithCitations({ content }: { content: string }) {
       
       try {
         const domain = new URL(href).hostname;
-        const sources = linkData[domain] || [href];
         
-        // Add citation styling
-        link.className = 'text-blue-600 hover:text-blue-800 border-b border-blue-200 hover:border-blue-400 no-underline hover:no-underline transition-colors';
-        link.setAttribute('data-domain', domain);
-        link.setAttribute('data-sources', sources.join(','));
-        link.setAttribute('title', `Source: ${domain} (${sources.length} link${sources.length > 1 ? 's' : ''})`);
+        // Create citation wrapper
+        const citationWrapper = document.createElement('span');
+        citationWrapper.className = 'inline-flex items-center';
+        
+        // Create citation text
+        const citationText = document.createElement('span');
+        citationText.textContent = text;
+        
+        // Create citation badge
+        const citationBadge = document.createElement('span');
+        citationBadge.textContent = domain;
+        citationBadge.className = 'px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded cursor-pointer hover:bg-gray-200 transition-colors ml-1 border border-gray-200';
+        citationBadge.title = `Source: ${domain}`;
+        
+        // Add click handler to open the source
+        citationBadge.onclick = (e) => {
+          e.preventDefault();
+          window.open(href, '_blank', 'noopener,noreferrer');
+        };
+        
+        // Build the citation
+        citationWrapper.appendChild(citationText);
+        citationWrapper.appendChild(citationBadge);
+        
+        // Replace the original link
+        link.parentNode?.replaceChild(citationWrapper, link);
         
       } catch {
-        // Keep as regular link for invalid URLs
+        // Keep as regular link for invalid URLs but style it
+        link.className = 'text-blue-600 hover:text-blue-800 underline';
       }
     });
-  }, [content, linkData]);
+  }, [processedContent, referenceMap]);
   
   return (
     <div 
       ref={containerRef}
       className="prose prose-sm dark:prose-invert max-w-none"
     >
-      <Response>{content}</Response>
+      <Response>{processedContent}</Response>
     </div>
   );
 }
