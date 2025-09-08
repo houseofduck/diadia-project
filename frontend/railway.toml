@@ -1,8 +1,11 @@
 [build]
 builder = "NIXPACKS"
-buildCommand = "cd frontend && npm install && npm run build"
+watchPatterns = ["frontend/**"]
+
+[build.env]
+NODE_VERSION = "18"
 
 [deploy]
-startCommand = "cd frontend && npm run start"
+startCommand = "npm run start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
