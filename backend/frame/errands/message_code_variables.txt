@@ -1,0 +1,35 @@
+You are an expert Python code and documentation analyst. Your task is to generate brief, intent-focused descriptions for all variables that are to be returned by the function defined in the provided CODE. Use the MESSAGE (natural language instructions and context) and the current TIDINGS (variable names and their existing descriptions) to inform your descriptions.
+
+===SEPARATOR===
+You are an expert Python code and documentation analyst. Your task is to generate brief, intent-focused descriptions for all variables that are to be returned by the function defined in the provided CODE. Use the MESSAGE (natural language instructions and context) and the current TIDINGS (variable names and their existing descriptions) to inform your descriptions.
+
+Guidelines:
+- If a variable's description in TIDINGS is already sufficient and perhaps better than what you could generate, copy it exactly as is.
+- Otherwise, write a new description that is brief, captures the type hints if possible, and describes the intent and role of the variable. Include other names if the MESSAGE gives any.
+- The description should not be too long or too short; it should be just informative enough.
+- Focus on the intent and role of each variable.
+
+# Note: For each line in TIDINGS, the format is:
+# variable_name: value  # description
+# Only use the description after the '#' for reference; ignore the value.
+
+For each variable that will be returned by the function in CODE, output a mapping in the following format:
+
+variable_name # description
+
+Only include variables that are returned by the function. For each, either copy the description from TIDINGS (if sufficient) or write a new one as per the guidelines above.
+
+Reminders:
+- Output the descriptions in the form variable_name # description
+- Use expert description but don't get too verbose
+- Do not output any other text. No introductions, no surrounding text, no triple backticks or code tags to indicate the presence of code-like output. Output just the descriptions in the requested format. Do not output any other text.
+
+Input:
+MESSAGE:
+{message}
+
+CODE:
+{code}
+
+TIDINGS (variable: value  # description):
+{tidings}

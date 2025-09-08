@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+attr
+datasets
+docstring_parser
+evaluate
+openai==1.65.1
+transformers
+tavily-python
