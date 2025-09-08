@@ -14,6 +14,8 @@ import {
 } from "../components/ai-elements/inline-citation";
 import { cn } from "../lib/utils";
 import { Download, ExternalLinkIcon, Expand, X } from "lucide-react";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas-pro';
 
 export interface ReportViewProps {
   report: string;
@@ -181,7 +183,7 @@ function MarkdownWithCitations({ content }: { content: string }) {
   }, [processedContent, referenceMap]);
 
   return (
-    <div ref={containerRef} className="prose prose-lg ">
+    <div ref={containerRef} className="prose prose-lg dark:prose-invert max-w-none prose-h1:font-serif prose-p:mb-4 prose-h2:mt-8 prose-h2:mb-4 prose-h3:mt-6 prose-h3:mb-3">
       <Response>{processedContent}</Response>
     </div>
   );
@@ -195,16 +197,126 @@ export function ReportView({
   isFullWidth = false,
   onToggleFullWidth,
 }: ReportViewProps) {
-  const handleDownloadMarkdown = useCallback(() => {
-    const blob = new Blob([report], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `research-report-${sessionKey || Date.now()}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const handleDownloadPDF = useCallback(async () => {
+    const reportContent = document.querySelector('[data-report-content]');
+    if (!reportContent) return;
+
+    try {
+      // Create a temporary container for PDF generation with logo
+      const pdfContainer = document.createElement('div');
+      pdfContainer.style.position = 'absolute';
+      pdfContainer.style.left = '-9999px';
+      pdfContainer.style.top = '0';
+      pdfContainer.style.width = '800px';
+      pdfContainer.style.padding = '40px';
+      pdfContainer.style.backgroundColor = 'white';
+      pdfContainer.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      
+      // Add logo and title
+      pdfContainer.innerHTML = `
+        <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #e5e5e5; padding-bottom: 20px;">
+          <div style="font-size: 24px; font-weight: bold; color: #1a1a1a; margin-bottom: 8px;">📊 Research Report</div>
+          <div style="font-size: 14px; color: #666; font-family: monospace;">${sessionKey ? `Session: ${sessionKey.slice(0, 8)}...` : ''}</div>
+          <div style="font-size: 12px; color: #999;">${new Date().toLocaleString()}</div>
+        </div>
+        <div style="line-height: 1.6; color: #333;"></div>
+      `;
+      
+      // Clone and clean the report content
+      const contentClone = reportContent.cloneNode(true) as HTMLElement;
+      
+      // Remove any interactive elements or unwanted styling
+      const interactiveElements = contentClone.querySelectorAll('button, [role="button"], .hover\\:, [class*="hover:"]');
+      interactiveElements.forEach(el => el.remove());
+      
+      // Ensure good PDF styling
+      contentClone.style.maxWidth = 'none';
+      contentClone.style.fontSize = '14px';
+      contentClone.style.lineHeight = '1.6';
+      contentClone.style.color = '#333';
+      
+      // Style headings for PDF
+      const headings = contentClone.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      headings.forEach((heading, index) => {
+        const h = heading as HTMLElement;
+        h.style.color = '#1a1a1a';
+        h.style.marginTop = index === 0 ? '0' : '24px';
+        h.style.marginBottom = '12px';
+        h.style.fontWeight = 'bold';
+        if (h.tagName === 'H1') h.style.fontSize = '24px';
+        if (h.tagName === 'H2') h.style.fontSize = '20px';
+        if (h.tagName === 'H3') h.style.fontSize = '18px';
+      });
+      
+      // Style paragraphs
+      const paragraphs = contentClone.querySelectorAll('p');
+      paragraphs.forEach(p => {
+        const para = p as HTMLElement;
+        para.style.marginBottom = '12px';
+        para.style.textAlign = 'justify';
+      });
+      
+      // Style lists
+      const lists = contentClone.querySelectorAll('ul, ol');
+      lists.forEach(list => {
+        const l = list as HTMLElement;
+        l.style.marginBottom = '12px';
+        l.style.paddingLeft = '20px';
+      });
+      
+      // Add the cleaned content to PDF container
+      const contentDiv = pdfContainer.querySelector('div:last-child');
+      if (contentDiv) {
+        contentDiv.appendChild(contentClone);
+      }
+      
+      document.body.appendChild(pdfContainer);
+      
+      // Generate PDF
+      const canvas = await html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Download the PDF
+      pdf.save(`research-report-${sessionKey || Date.now()}.pdf`);
+      
+      // Clean up
+      document.body.removeChild(pdfContainer);
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      // Fallback to markdown download
+      const blob = new Blob([report], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `research-report-${sessionKey || Date.now()}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
   }, [report, sessionKey]);
 
   return (
@@ -229,16 +341,16 @@ export function ReportView({
             </Button>
           )}
 
-          <Button variant="ghost" size="sm" onClick={handleDownloadMarkdown}>
+          <Button variant="ghost" size="sm" onClick={handleDownloadPDF}>
             <Download className="w-4 h-4" />
-            Download
+            Download PDF
           </Button>
         </div>
       </div>
 
       {/* Report content - with overflow handling */}
       <ScrollArea className="flex-1 overflow-y-auto">
-        <div className="p-6">
+        <div className="p-6" data-report-content>
           <MarkdownWithCitations content={report} />
         </div>
       </ScrollArea>
