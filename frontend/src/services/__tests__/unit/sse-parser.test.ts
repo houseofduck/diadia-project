@@ -114,6 +114,42 @@ data: {"type":"actual","data":"content"}
       expect(events).toHaveLength(1);
       expect(events[0].type).toBe('test');
     });
+
+    it('should parse backend event format with nested event object', () => {
+      const backendEvent = '{"event": {"type": "error", "description": "Invalid prompt"}, "session_key": "test-123"}\n';
+      const events = parser.parseChunk(backendEvent);
+      
+      expect(events).toHaveLength(1);
+      expect(events[0]).toEqual({
+        type: 'error',
+        description: 'Invalid prompt',
+        session_key: 'test-123'
+      });
+    });
+
+    it('should parse backend SSE data format with nested event', () => {
+      const backendSSEEvent = 'data: {"event": {"type": "started", "description": "Research started"}, "session_key": "session-456"}\n';
+      const events = parser.parseChunk(backendSSEEvent);
+      
+      expect(events).toHaveLength(1);
+      expect(events[0]).toEqual({
+        type: 'started',
+        description: 'Research started',
+        session_key: 'session-456'
+      });
+    });
+
+    it('should handle backend error events correctly', () => {
+      const errorEvent = '{"event": {"type": "error", "description": "It would appear that the prompt is not a valid document research prompt. Please try again with a valid prompt."}, "session_key": "error-test"}\n';
+      const events = parser.parseChunk(errorEvent);
+      
+      expect(events).toHaveLength(1);
+      expect(events[0]).toEqual({
+        type: 'error',
+        description: 'It would appear that the prompt is not a valid document research prompt. Please try again with a valid prompt.',
+        session_key: 'error-test'
+      });
+    });
   });
 
   describe('parseSSEStream', () => {

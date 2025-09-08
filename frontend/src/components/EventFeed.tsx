@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { Badge } from '../components/ui/badge';
-import { ScrollArea } from '../components/ui/scroll-area';
 import { 
   Message,
   MessageContent,
@@ -95,52 +94,50 @@ export function EventFeed({ events, className }: EventFeedProps) {
   }
 
   return (
-    <div className={cn('flex-1 min-h-0', className)}>
-      <Conversation className="h-full">
-        <ConversationContent className="space-y-3">
-          {sortedEvents.map((event, index) => (
-            <Message
-              key={`${event.id}-${index}`}
-              from="assistant"
-              className="group w-full items-start"
-            >
-              <MessageContent className="w-full max-w-none">
-                <div className="flex items-start gap-3">
-                  <div className="text-lg leading-none mt-0.5">
-                    {getEventIcon(event.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge 
-                        variant="outline" 
-                        className={cn('text-xs font-medium border', getEventColor(event.type))}
-                      >
-                        {event.type}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimestamp(event.timestamp)}
-                      </span>
-                    </div>
-                    {event.description && (
-                      <p className="text-sm leading-relaxed">
-                        {event.description}
-                      </p>
-                    )}
-                    {event.data && typeof event.data === 'object' ? (
-                      <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
-                        <pre className="whitespace-pre-wrap break-all">
-                          {JSON.stringify(event.data, null, 2)}
-                        </pre>
-                      </div>
-                    ) : null}
-                  </div>
+    <Conversation className={cn('h-full', className)}>
+      <ConversationContent className="space-y-3">
+        {sortedEvents.map((event, index) => (
+          <Message
+            key={`${event.id}-${index}`}
+            from="assistant"
+            className="w-full"
+          >
+            <MessageContent>
+              <div className="flex items-start gap-3">
+                <div className="text-lg leading-none mt-0.5 flex-shrink-0">
+                  {getEventIcon(event.type)}
                 </div>
-              </MessageContent>
-            </Message>
-          ))}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-    </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge 
+                      variant="outline" 
+                      className={cn('text-xs font-medium border', getEventColor(event.type))}
+                    >
+                      {event.type}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTimestamp(event.timestamp)}
+                    </span>
+                  </div>
+                  {event.description && (
+                    <p className="text-sm leading-relaxed">
+                      {event.description}
+                    </p>
+                  )}
+                  {event.data && typeof event.data === 'object' ? (
+                    <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                      <pre className="whitespace-pre-wrap break-all">
+                        {JSON.stringify(event.data, null, 2)}
+                      </pre>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </MessageContent>
+          </Message>
+        ))}
+      </ConversationContent>
+      <ConversationScrollButton />
+    </Conversation>
   );
 }

@@ -27,7 +27,12 @@ export function createSSEParser() {
         }
         
         try {
-          const event = JSON.parse(jsonStr) as ParsedSSEEvent;
+          const parsed = JSON.parse(jsonStr);
+          // Handle backend format: {"event": {...}, "session_key": "..."}
+          const event = parsed.event ? parsed.event as ParsedSSEEvent : parsed as ParsedSSEEvent;
+          if (parsed.session_key) {
+            event.session_key = parsed.session_key;
+          }
           events.push(event);
         } catch (error) {
           // Try to parse as NDJSON (newline-delimited JSON)
@@ -42,7 +47,12 @@ export function createSSEParser() {
       } else if (line && !line.startsWith(':')) {
         // Try to parse as plain NDJSON
         try {
-          const event = JSON.parse(line) as ParsedSSEEvent;
+          const parsed = JSON.parse(line);
+          // Handle backend format: {"event": {...}, "session_key": "..."}
+          const event = parsed.event ? parsed.event as ParsedSSEEvent : parsed as ParsedSSEEvent;
+          if (parsed.session_key) {
+            event.session_key = parsed.session_key;
+          }
           events.push(event);
         } catch (error) {
           // Ignore non-JSON lines (could be SSE comments or empty lines)
@@ -68,11 +78,19 @@ export function createSSEParser() {
       if (state.buffer.startsWith('data: ')) {
         const jsonStr = state.buffer.substring(6);
         if (jsonStr !== '[DONE]') {
-          const event = JSON.parse(jsonStr) as ParsedSSEEvent;
+          const parsed = JSON.parse(jsonStr);
+          const event = parsed.event ? parsed.event as ParsedSSEEvent : parsed as ParsedSSEEvent;
+          if (parsed.session_key) {
+            event.session_key = parsed.session_key;
+          }
           events.push(event);
         }
       } else {
-        const event = JSON.parse(state.buffer) as ParsedSSEEvent;
+        const parsed = JSON.parse(state.buffer);
+        const event = parsed.event ? parsed.event as ParsedSSEEvent : parsed as ParsedSSEEvent;
+        if (parsed.session_key) {
+          event.session_key = parsed.session_key;
+        }
         events.push(event);
       }
     } catch (error) {

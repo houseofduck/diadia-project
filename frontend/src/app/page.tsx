@@ -162,42 +162,43 @@ export default function HomePage() {
         )}
 
         {/* Content Display */}
-        <div className="flex-1 min-h-0">
-          {showingReport ? (
-            <ReportView 
-              report={report} 
-              sessionKey={sessionKey || undefined}
-              onNewQuery={handleNewQuery}
-            />
-          ) : showingProgress ? (
-            <EventFeed events={events} />
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center max-w-md mx-auto p-8">
-                <div className="text-6xl mb-6">🔍</div>
-                <h1 className="text-2xl font-bold mb-4">
-                  Deep Research Assistant
-                </h1>
-                <p className="text-muted-foreground mb-6">
-                  Ask me anything and I'll conduct comprehensive research to give you detailed, well-sourced answers.
-                </p>
-                <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
-                  {isOnline ? (
-                    <>
-                      <Wifi className="w-4 h-4 text-green-600" />
-                      <span>Connected</span>
-                    </>
-                  ) : (
-                    <>
-                      <WifiOff className="w-4 h-4 text-red-600" />
-                      <span>Offline</span>
-                    </>
-                  )}
-                </div>
+        {showingReport ? (
+          <ReportView 
+            report={report} 
+            sessionKey={sessionKey || undefined}
+            onNewQuery={handleNewQuery}
+            className="flex-1 min-h-0"
+          />
+        ) : showingProgress ? (
+          <div className="flex-1 min-h-0">
+            <EventFeed events={events} className="h-full" />
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto p-8">
+              <div className="text-6xl mb-6">🔍</div>
+              <h1 className="text-2xl font-bold mb-4">
+                Deep Research Assistant
+              </h1>
+              <p className="text-muted-foreground mb-6">
+                Ask me anything and I'll conduct comprehensive research to give you detailed, well-sourced answers.
+              </p>
+              <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground">
+                {isOnline ? (
+                  <>
+                    <Wifi className="w-4 h-4 text-green-600" />
+                    <span>Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-4 h-4 text-red-600" />
+                    <span>Offline</span>
+                  </>
+                )}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Input Area */}
         <div className="p-4 border-t bg-background">

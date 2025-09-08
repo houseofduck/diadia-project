@@ -204,9 +204,12 @@ export function useResearchStream(): UseResearchStreamReturn {
           // Handle specific event types
           switch (sseEvent.type) {
             case 'error':
+              const errorMessage = sseEvent.description || 
+                                 (typeof sseEvent.data === 'object' && sseEvent.data && 'message' in sseEvent.data ? (sseEvent.data as any).message : null) || 
+                                 'An error occurred';
               dispatch({ 
                 type: 'SET_ERROR', 
-                payload: sseEvent.description || event.error || 'An error occurred' 
+                payload: errorMessage
               });
               break;
               
