@@ -34,6 +34,7 @@ export interface EventFeedProps {
   events: SSEEvent[];
   className?: string;
   isStreaming?: boolean;
+  userQuery?: string | null;
 }
 
 function getEventColor(type: string): string {
@@ -210,7 +211,7 @@ function LiveTimestamp({
   );
 }
 
-export function EventFeed({ events, className, isStreaming = false }: EventFeedProps) {
+export function EventFeed({ events, className, isStreaming = false, userQuery }: EventFeedProps) {
   const sortedEvents = useMemo(() => 
     [...events].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
     [events]
@@ -236,6 +237,15 @@ export function EventFeed({ events, className, isStreaming = false }: EventFeedP
   return (
     <Conversation className={cn('h-full', className)}>
       <ConversationContent className="space-y-3">
+        {/* User Query at the top */}
+        {userQuery && (
+          <Message from="user" className="justify-start">
+            <MessageContent className="bg-primary text-primary-foreground">
+              {userQuery}
+            </MessageContent>
+          </Message>
+        )}
+        
         {sortedEvents.map((event, index) => (
           <Message
             key={`${event.id}-${index}`}

@@ -5,9 +5,11 @@ import {
   streamResearch, 
   cancelResearch,
   generateSessionKey,
+  saveSession,
   type SessionStatus,
   type SSEEvent,
-  type ResearchRequest
+  type ResearchRequest,
+  type ResearchSession
 } from '../services';
 import { useSession } from '../context/SessionContext';
 
@@ -134,6 +136,7 @@ export interface UseResearchStreamActions {
   cancel: () => void;
   retry: () => void;
   reset: () => void;
+  restoreSession: (session: ResearchSession) => void;
 }
 
 export interface UseResearchStreamReturn extends ResearchStreamState, UseResearchStreamActions {
@@ -165,7 +168,41 @@ export function useResearchStream(): UseResearchStreamReturn {
     }
   }, []);
 
+  // Keep track of whether we're in restoration mode
+  const restoringRef = useRef(false);
+
+  // Save session state whenever it changes
+  useEffect(() => {
+    const saveSessionState = async () => {
+      if (!sessionKey || !state.lastRequest || restoringRef.current) return;
+
+      const sessionData: ResearchSession = {
+        sessionKey,
+        prompt: state.lastRequest.prompt,
+        startedAt: new Date(), // This should be more accurate, but for now...
+        status: state.status,
+        events: state.events,
+        report: state.report || undefined,
+        error: state.error || undefined,
+      };
+
+      try {
+        await saveSession(sessionKey, sessionData);
+        console.log('Saved session state:', state.status, state.events.length);
+      } catch (err) {
+        console.error('Failed to save session:', err);
+      }
+    };
+
+    // Only save if we have meaningful state changes and we're not restoring
+    if (state.status !== 'idle' && sessionKey && !restoringRef.current) {
+      saveSessionState();
+    }
+  }, [sessionKey, state.status, state.events, state.report, state.error, state.lastRequest]);
+
   const start = useCallback(async (prompt: string, options: Partial<ResearchRequest> = {}) => {
+    console.log('START called with:', { prompt, options, isOnline: state.isOnline, status: state.status });
+    
     if (!state.isOnline) {
       dispatch({ type: 'SET_ERROR', payload: 'No internet connection available' });
       return;
@@ -176,6 +213,7 @@ export function useResearchStream(): UseResearchStreamReturn {
     
     // Generate session key if not provided
     const currentSessionKey = options.session_key || sessionKey || generateSessionKey();
+    console.log('Using session key:', currentSessionKey);
     setSessionKey(currentSessionKey);
 
     const request: ResearchRequest = {
@@ -187,6 +225,7 @@ export function useResearchStream(): UseResearchStreamReturn {
 
     try {
       dispatch({ type: 'SET_STREAMING' });
+      console.log('About to call streamResearch with request:', request);
       
       await streamResearch(request, {
         onEvent: (event) => {
@@ -269,6 +308,56 @@ export function useResearchStream(): UseResearchStreamReturn {
     clearSession();
   }, [clearSession]);
 
+  const restoreSession = useCallback((session: ResearchSession) => {
+    console.log('Restoring session in hook:', session.sessionKey, session.status);
+    
+    // Set restoration mode to prevent auto-saving during restore
+    restoringRef.current = true;
+    
+    // Set the session key in context first
+    setSessionKey(session.sessionKey);
+    
+    // Restore the base state without starting a request
+    dispatch({ type: 'RESET' });
+    
+    // Set the last request for retry functionality
+    dispatch({ 
+      type: 'START_REQUEST', 
+      payload: { 
+        prompt: session.prompt,
+        options: { session_key: session.sessionKey }
+      } 
+    });
+
+    // Add all events
+    session.events.forEach(event => {
+      dispatch({ type: 'ADD_EVENT', payload: event });
+    });
+
+    // Set final state based on session status
+    if (session.status === 'completed') {
+      if (session.report) {
+        dispatch({ type: 'SET_REPORT', payload: session.report });
+      }
+      dispatch({ type: 'SET_COMPLETED' });
+    } else if (session.status === 'error' && session.error) {
+      dispatch({ type: 'SET_ERROR', payload: session.error });
+    } else if (session.status === 'cancelled') {
+      dispatch({ type: 'SET_CANCELLED' });
+    } else if (session.status === 'streaming') {
+      dispatch({ type: 'SET_STREAMING' });
+    } else if (session.status === 'submitting') {
+      dispatch({ type: 'SET_SUBMITTING' });
+    }
+    
+    // Reset restoration mode after a short delay
+    setTimeout(() => {
+      restoringRef.current = false;
+    }, 500);
+    
+    console.log('Session restoration completed');
+  }, [setSessionKey]);
+
   return {
     // State from reducer
     ...state,
@@ -279,5 +368,6 @@ export function useResearchStream(): UseResearchStreamReturn {
     cancel,
     retry,
     reset,
+    restoreSession,
   };
 }
