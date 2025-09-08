@@ -16,7 +16,6 @@ import {
   Target,
   Globe,
   Settings,
-  Clock,
   ChevronDownIcon,
 } from "lucide-react";
 import { Message, MessageContent } from "../components/ai-elements/message";
@@ -207,7 +206,6 @@ function LiveElapsedTime({
 
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <Clock className="w-3 h-3" />
       <span>{elapsedTime}</span>
     </div>
   );

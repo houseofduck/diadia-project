@@ -8,6 +8,8 @@ interface ReportPanelProps {
   sessionKey?: string;
   onNewQuery?: () => void;
   shouldAnimate?: boolean;
+  isFullWidth?: boolean;
+  onToggleFullWidth?: () => void;
 }
 
 export function ReportPanel({
@@ -15,6 +17,8 @@ export function ReportPanel({
   sessionKey,
   onNewQuery,
   shouldAnimate = true,
+  isFullWidth = false,
+  onToggleFullWidth,
 }: ReportPanelProps) {
   const animationProps = shouldAnimate
     ? {
@@ -35,13 +39,15 @@ export function ReportPanel({
   return (
     <motion.div
       {...animationProps}
-      className="w-full md:w-1/2 border-t md:border-t-0 md:border-l flex flex-col h-full bg-white relative z-10"
+      className={`w-full ${isFullWidth ? 'md:w-full' : 'md:w-[70%]'} border-t md:border-t-0 md:border-l flex flex-col h-full bg-white relative z-10 ${isFullWidth ? 'md:border-l-0' : ''}`}
     >
       <ReportView
         report={report}
         sessionKey={sessionKey}
         onNewQuery={onNewQuery}
         className="h-full"
+        isFullWidth={isFullWidth}
+        onToggleFullWidth={onToggleFullWidth}
       />
     </motion.div>
   );

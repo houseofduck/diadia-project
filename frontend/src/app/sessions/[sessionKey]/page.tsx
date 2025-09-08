@@ -78,6 +78,7 @@ export default function SessionPage() {
   const query = searchParams?.get("q");
 
   const [showReport, setShowReport] = useState(false);
+  const [isReportFullWidth, setIsReportFullWidth] = useState(false);
   const [userMessage, setUserMessage] = useState<string | null>(query);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionNotFound, setSessionNotFound] = useState(false);
@@ -179,6 +180,10 @@ export default function SessionPage() {
     router.push("/");
   }, [reset, router]);
 
+  const handleToggleReportFullWidth = useCallback(() => {
+    setIsReportFullWidth(!isReportFullWidth);
+  }, [isReportFullWidth]);
+
   const hasReport = status === "completed" && report;
   const showingProgress =
     (status === "streaming" || status === "submitting" || hasReport) && events.length > 0;
@@ -247,7 +252,7 @@ export default function SessionPage() {
       {/* Main Content Area with two columns when report is shown */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Left Column - Event Feed */}
-        <div className={`flex-1 flex flex-col min-h-0 bg-white relative z-10 ${showReport && hasReport ? 'md:w-1/2 w-full' : 'w-full'}`}>
+        <div className={`flex-1 flex flex-col min-h-0 bg-white relative z-10 ${showReport && hasReport && !isReportFullWidth ? 'md:w-[30%] w-full' : 'w-full'} ${isReportFullWidth ? 'hidden md:hidden' : ''}`}>
           {showingError ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md mx-auto p-8">
@@ -308,6 +313,8 @@ export default function SessionPage() {
             sessionKey={sessionKey || undefined}
             onNewQuery={handleNewQuery}
             shouldAnimate={!hasReportBeenViewedRef.current}
+            isFullWidth={isReportFullWidth}
+            onToggleFullWidth={handleToggleReportFullWidth}
           />
         )}
       </div>
