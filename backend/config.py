@@ -70,6 +70,9 @@ class ModelConfig:
     api_key_file: str = field(
         default_factory=lambda: os.getenv("LLM_API_KEY_FILE", "nvdev_api.txt")
     )
+    api_key: Optional[str] = field(
+        default_factory=lambda: os.getenv("OPEN_AI_API_KEY")
+    )
     temperature: float = field(
         default_factory=lambda: float(os.getenv("LLM_TEMPERATURE", "0.2"))
     )
@@ -85,6 +88,9 @@ class SearchConfig:
 
     tavily_api_key_file: str = field(
         default_factory=lambda: os.getenv("TAVILY_API_KEY_FILE", "tavily_api.txt")
+    )
+    tavily_api_key: Optional[str] = field(
+        default_factory=lambda: os.getenv("TAVILY_API_KEY")
     )
     max_search_results: int = field(
         default_factory=lambda: int(os.getenv("MAX_SEARCH_RESULTS", "10"))

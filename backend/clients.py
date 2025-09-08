@@ -76,23 +76,35 @@ def get_api_key(api_type: ApiType) -> str:
     """
     Get the API key for the specified API type.
 
-    This function reads API keys from configuration-specified files.
-    The file paths can be customized via environment variables.
+    This function first checks for environment variables, then falls back
+    to reading from configuration-specified files.
 
     Args:
         api_type: The type of API to get the key for ("nvdev", "openai", "tavily")
 
     Returns:
-        str: The API key from the configured file
+        str: The API key from environment variable or file
 
     Raises:
-        FileNotFoundError: If the API key file doesn't exist
+        FileNotFoundError: If neither env var nor API key file exist
         ValueError: If the API type is unknown
 
     Example:
         >>> get_api_key("tavily")
         "your-tavily-api-key"
     """
+    # First, try to get API key from environment variables
+    env_vars = {
+        "nvdev": config.model.api_key,
+        "openai": config.model.api_key,
+        "tavily": config.search.tavily_api_key,
+    }
+    
+    env_key = env_vars.get(api_type)
+    if env_key:
+        return env_key
+    
+    # Fall back to reading from files
     api_key_files = {
         "nvdev": config.model.api_key_file,
         "openai": "openai_api.txt",
@@ -108,8 +120,9 @@ def get_api_key(api_type: ApiType) -> str:
             return file.read().strip()
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"API key file not found for {api_type}. "
-            f"Please create {key_file} with your API key. "
+            f"API key not found for {api_type}. "
+            f"Please set environment variable or create {key_file} with your API key. "
+            f"Environment variables: OPEN_AI_API_KEY (for openai), TAVILY_API_KEY (for tavily). "
             f"See README.md for configuration instructions."
         )
 

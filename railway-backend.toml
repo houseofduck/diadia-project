@@ -1,0 +1,15 @@
+[build]
+builder = "NIXPACKS"
+watchPatterns = ["backend/**"]
+
+[build.env]
+NIXPACKS_PYTHON_VERSION = "3.11"
+
+[deploy]
+startCommand = "uvicorn main:app --host 0.0.0.0 --port $PORT"
+workingDirectory = "backend"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[env]
+PORT = 8000
