@@ -4,6 +4,8 @@
 
 **Status**: ✅ **COMPLETED SUCCESSFULLY** - All core requirements met with significant enhancements
 
+**Demo video**: [Click to view](https://files.duckhou.se/diadia-demo-takehome-project.mp4)
+
 ## Implementation Summary
 
 This project successfully implements a comprehensive research application with a Next.js frontend that communicates with a FastAPI backend. The implementation exceeds the basic requirements with robust error handling, comprehensive testing (104+ tests), PDF export functionality, and a polished user experience built on a solid state machine architecture.
