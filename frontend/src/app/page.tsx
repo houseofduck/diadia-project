@@ -15,12 +15,12 @@ import Mark from "components/components/ui/mark";
 import { Suggestion, Suggestions } from "../components/ai-elements/suggestion";
 
 const suggestions = [
-  "Latest developments in quantum computing",
-  "Impact of AI on healthcare industry",
-  "Climate change solutions and technologies",
-  "Future of renewable energy",
-  "Blockchain applications beyond cryptocurrency",
-  "Space exploration recent discoveries",
+  "What was the capital of France in 1338?",
+  "Write a report on stock market situation on during this morning",
+  "Produce a thorough report on the major event happened in the Christian world on the 21st of April 2025",
+  "Produce a report on the differences between the US and European economy health in 2024",
+  "What is the short history of the internet?",
+  "Write a comprehensive report on recent AI breakthroughs",
 ];
 
 export default function HomePage() {
